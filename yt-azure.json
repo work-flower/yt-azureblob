@@ -1,0 +1,11 @@
+{
+  "azure": {
+    "connection_string": "",
+    "container_name": "",
+    "blob_folder": ""
+  },
+  "download": {
+    "output_path": "./downloads",
+    "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best"
+  }
+}

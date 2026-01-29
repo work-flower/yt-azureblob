@@ -17,6 +17,19 @@ sudo apt install ffmpeg
 brew install ffmpeg
 ```
 
+**Node.js** is required for YouTube's JavaScript challenge solving.
+
+```bash
+# Windows (Command Prompt or PowerShell)
+winget install OpenJS.NodeJS
+
+# Linux (Debian/Ubuntu)
+sudo apt install nodejs
+
+# macOS
+brew install node
+```
+
 ## Installation
 
 ```bash

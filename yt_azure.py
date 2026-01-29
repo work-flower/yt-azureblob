@@ -475,26 +475,27 @@ def launch_ui(config_path=None):
     
     def select_history_item(selected_value):
         """Handle selection of history item from dropdown"""
+        empty_result = ("", "", "", "", "", "", "", update_preview("", "", ""), "")
+
         if not selected_value:
-            return "", "", "", "", "", "", "", update_preview("", "", ""), ""
-        
+            return empty_result
+
         h = load_history()
         # Extract index from "1. url..." format
         try:
             idx = int(selected_value.split(".")[0]) - 1
         except (ValueError, IndexError):
-            return "", "", "", "", "", "", "", update_preview("", "", ""), ""
-        
+            return empty_result
+
         if 0 <= idx < len(h["entries"]):
             h["position"] = idx
             save_history(h)
             entry = h["entries"][idx]
-            
+
             url = entry.get("url", "")
             start = entry.get("start", "")
             end = entry.get("end", "")
-            log = entry.get("log", "")
-            
+
             return (
                 url,
                 start,
@@ -504,9 +505,9 @@ def launch_ui(config_path=None):
                 entry.get("blob_folder", ""),
                 entry.get("format", ""),
                 update_preview(url, start, end),
-                log
+                entry.get("log", "")
             )
-        return "", "", "", "", "", "", "", update_preview("", "", ""), ""
+        return empty_result
     
     def process(url, start_time, end_time, video_name, container, blob_folder, format_str, do_upload):
         if not url:

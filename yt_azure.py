@@ -651,9 +651,12 @@ def launch_ui(config_path=None):
         history_list.change(fn=select_history_item, inputs=[history_list], outputs=form_fields + [preview_html, output])
         
         # Update preview when URL or times change
-        url_input.change(fn=update_preview, inputs=[url_input, start_input, end_input], outputs=[preview_html])
-        start_input.change(fn=update_preview, inputs=[url_input, start_input, end_input], outputs=[preview_html])
-        end_input.change(fn=update_preview, inputs=[url_input, start_input, end_input], outputs=[preview_html])
+        gr.on(
+            triggers=[url_input.change, start_input.change, end_input.change],
+            fn=update_preview,
+            inputs=[url_input, start_input, end_input],
+            outputs=[preview_html]
+        )
         
         submit_btn.click(
             fn=process,

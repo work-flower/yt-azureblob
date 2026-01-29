@@ -285,6 +285,9 @@ def download_video(url, start_time=None, end_time=None, config=None, custom_name
     ydl_opts = {
         "outtmpl": str(output_path / output_template),
         "format": config["download"]["format"],
+        "js_runtimes": {"node": {}},
+        "cookiesfrombrowser": ("firefox",),
+        "allow_remote_components": {"ejs": ["github"]},
     }
     
     # Add time range if specified
@@ -475,7 +478,7 @@ def launch_ui(config_path=None):
     
     def select_history_item(selected_value):
         """Handle selection of history item from dropdown"""
-        empty_result = ("", "", "", "", "", "", "", update_preview("", "", ""), "")
+        empty_result = ("", "", "", "", "", "", "", True, update_preview("", "", ""), "")
 
         if not selected_value:
             return empty_result
@@ -504,6 +507,7 @@ def launch_ui(config_path=None):
                 entry.get("container", ""),
                 entry.get("blob_folder", ""),
                 entry.get("format", ""),
+                entry.get("upload", True),
                 update_preview(url, start, end),
                 entry.get("log", "")
             )
@@ -563,6 +567,7 @@ def launch_ui(config_path=None):
             "container": container,
             "blob_folder": blob_folder,
             "format": format_str,
+            "upload": do_upload,
             "log": "\n".join(output),
             "timestamp": datetime.now().isoformat()
         }
@@ -581,6 +586,7 @@ def launch_ui(config_path=None):
         "container": last_entry.get("container", "") if last_entry else "",
         "blob_folder": last_entry.get("blob_folder", "") if last_entry else "",
         "format": last_entry.get("format", "") if last_entry else "",
+        "upload": last_entry.get("upload", True) if last_entry else True,
     }
     
     with gr.Blocks(title="yt-azure") as app:
@@ -629,13 +635,21 @@ def launch_ui(config_path=None):
                     placeholder=config["azure"].get("blob_folder") or "from config",
                     value=initial_values["blob_folder"]
                 )
-                format_input = gr.Textbox(
-                    label="Format", 
-                    placeholder="from config",
-                    value=initial_values["format"]
+                format_input = gr.Dropdown(
+                    label="Format",
+                    choices=[
+                        "bestvideo*+bestaudio/best",
+                        "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best",
+                        "bestvideo[height<=1080]+bestaudio/best",
+                        "bestvideo[height<=720]+bestaudio/best",
+                        "22/18/best",
+                        "best",
+                    ],
+                    value=initial_values["format"] or "bestvideo*+bestaudio/best",
+                    allow_custom_value=True
                 )
                 
-                upload_check = gr.Checkbox(label="Upload to Azure", value=True)
+                upload_check = gr.Checkbox(label="Upload to Azure", value=initial_values["upload"])
                 
                 submit_btn = gr.Button("🚀 Download", variant="primary")
             
@@ -647,7 +661,7 @@ def launch_ui(config_path=None):
                 output = gr.Textbox(label="Output", lines=4, interactive=False)
         
         # Event handlers
-        form_fields = [url_input, start_input, end_input, video_name_input, container_input, folder_input, format_input]
+        form_fields = [url_input, start_input, end_input, video_name_input, container_input, folder_input, format_input, upload_check]
         
         history_list.change(fn=select_history_item, inputs=[history_list], outputs=form_fields + [preview_html, output])
         

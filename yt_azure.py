@@ -571,7 +571,7 @@ def launch_ui(config_path=None):
         return "\n".join(output), gr.update(choices=get_history_list())
     
     # Load last entry for initial values
-    last_entry, last_pos = get_last_entry()
+    last_entry, _ = get_last_entry()
     initial_values = {
         "url": last_entry.get("url", "") if last_entry else "",
         "start": last_entry.get("start", "") if last_entry else "",

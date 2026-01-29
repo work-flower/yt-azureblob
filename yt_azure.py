@@ -10,7 +10,25 @@ import logging
 import os
 import sys
 from datetime import datetime
+from io import StringIO
 from pathlib import Path
+
+
+class TeeOutput:
+    """Captures output while still writing to original stream (real-time console + capture)"""
+    def __init__(self, original):
+        self.original = original
+        self.captured = StringIO()
+
+    def write(self, text):
+        self.original.write(text)
+        self.captured.write(text)
+
+    def flush(self):
+        self.original.flush()
+
+    def getvalue(self):
+        return self.captured.getvalue()
 
 try:
     import yt_dlp
@@ -519,23 +537,29 @@ def launch_ui(config_path=None):
 
         # Build config with overrides
         run_config = load_config(config_path)
-        
+
         if container:
             run_config["azure"]["container_name"] = container
         if blob_folder:
             run_config["azure"]["blob_folder"] = blob_folder
         if format_str:
             run_config["download"]["format"] = format_str
-        
+
         # Parse times (supports MM:SS format)
         start = parse_time(start_time)
         end = parse_time(end_time)
-        
+
         if (start is not None and end is None) or (start is None and end is not None):
             return "❌ Both start and end time required for partial download", gr.update(choices=get_history_list())
-        
+
+        # Capture console output while keeping real-time console display
+        tee_stdout = TeeOutput(sys.stdout)
+        tee_stderr = TeeOutput(sys.stderr)
+        sys.stdout, sys.stderr = tee_stdout, tee_stderr
+
         output = []
-        
+        filepath = None
+
         try:
             filepath = download_video(url, start, end, run_config, video_name)
             if not filepath:
@@ -545,8 +569,7 @@ def launch_ui(config_path=None):
         except Exception as e:
             logger.error(f"Download error: {e}")
             output.append(f"❌ Download error: {e}")
-            filepath = None
-        
+
         if filepath and do_upload:
             try:
                 blob_url = upload_to_azure(filepath, run_config)
@@ -557,6 +580,13 @@ def launch_ui(config_path=None):
             except Exception as e:
                 logger.error(f"Upload error: {e}")
                 output.append(f"❌ Upload error: {e}")
+
+        # Restore original stdout/stderr
+        sys.stdout, sys.stderr = tee_stdout.original, tee_stderr.original
+
+        # Combine captured console output with result
+        console_logs = tee_stdout.getvalue() + tee_stderr.getvalue()
+        full_output = console_logs.strip() + "\n\n" + "\n".join(output) if console_logs.strip() else "\n".join(output)
         
         # Save to history with log
         entry = {
@@ -568,13 +598,13 @@ def launch_ui(config_path=None):
             "blob_folder": blob_folder,
             "format": format_str,
             "upload": do_upload,
-            "log": "\n".join(output),
+            "log": full_output,
             "timestamp": datetime.now().isoformat()
         }
         add_to_history(entry)
         logger.info(f"Completed: {url}, start={start_time}, end={end_time}")
-        
-        return "\n".join(output), gr.update(choices=get_history_list())
+
+        return full_output, gr.update(choices=get_history_list())
     
     # Load last entry for initial values
     last_entry, _ = get_last_entry()
@@ -658,7 +688,7 @@ def launch_ui(config_path=None):
                 preview_html = gr.HTML(
                     value=update_preview(initial_values["url"], initial_values["start"], initial_values["end"])
                 )
-                output = gr.Textbox(label="Output", lines=4, interactive=False)
+                output = gr.Textbox(label="Output", lines=15, interactive=False)
         
         # Event handlers
         form_fields = [url_input, start_input, end_input, video_name_input, container_input, folder_input, format_input, upload_check]

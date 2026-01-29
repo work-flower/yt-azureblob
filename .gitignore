@@ -1,0 +1,7 @@
+yt-azure.log
+__pycache__
+build
+yt_azure.egg-info
+downloads
+yt-azureblob
+history.json

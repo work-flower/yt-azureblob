@@ -6,6 +6,7 @@ Cross-platform CLI tool (Windows, Linux, macOS)
 
 import argparse
 import json
+import logging
 import os
 import sys
 from pathlib import Path
@@ -103,7 +104,6 @@ def get_logs_path():
 
 def setup_logging():
     """Setup logging to file"""
-    import logging
     log_path = get_logs_path()
     logging.basicConfig(
         level=logging.INFO,
@@ -114,6 +114,9 @@ def setup_logging():
         ]
     )
     return logging.getLogger("yt-azure")
+
+
+logger = setup_logging()
 
 
 def load_history():
@@ -249,9 +252,7 @@ def download_video(url, start_time=None, end_time=None, config=None, custom_name
     """Download video using yt-dlp"""
     if config is None:
         config = load_config()
-    
-    logger = setup_logging()
-    
+
     # Resolve output path (handles relative paths cross-platform)
     output_path = resolve_path(config["download"]["output_path"])
     os.makedirs(output_path, exist_ok=True)
@@ -316,8 +317,7 @@ def upload_to_azure(filepath, config=None):
     """Upload file to Azure Blob Storage"""
     if config is None:
         config = load_config()
-    
-    logger = setup_logging()
+
     azure_config = config["azure"]
     
     if not azure_config.get("connection_string"):
@@ -512,9 +512,7 @@ def launch_ui(config_path=None):
     def process(url, start_time, end_time, video_name, container, blob_folder, format_str, do_upload):
         if not url:
             return "❌ URL is required", gr.update(choices=get_history_list())
-        
-        logger = setup_logging()
-        
+
         # Build config with overrides
         run_config = load_config(config_path)
         

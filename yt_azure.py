@@ -260,20 +260,22 @@ def download_video(url, start_time=None, end_time=None, config=None, custom_name
     if config is None:
         config = load_config()
 
+    has_time_range = start_time is not None and end_time is not None
+
     # Resolve output path (handles relative paths cross-platform)
     output_path = resolve_path(config["download"]["output_path"])
     os.makedirs(output_path, exist_ok=True)
-    
+
     # Build output template with time range and timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
+
     # Use custom name if provided, otherwise use video title
     if custom_name and custom_name.strip():
         base_name = custom_name.strip()
     else:
         base_name = "%(title)s"
-    
-    if start_time is not None and end_time is not None:
+
+    if has_time_range:
         start_fmt = format_time_for_filename(start_time)
         end_fmt = format_time_for_filename(end_time)
         output_template = f"{base_name}_{start_fmt}_to_{end_fmt}_{timestamp}.%(ext)s"
@@ -286,7 +288,7 @@ def download_video(url, start_time=None, end_time=None, config=None, custom_name
     }
     
     # Add time range if specified
-    if start_time is not None and end_time is not None:
+    if has_time_range:
         ydl_opts["download_ranges"] = yt_dlp.utils.download_range_func(
             None, [(float(start_time), float(end_time))]
         )
@@ -302,7 +304,7 @@ def download_video(url, start_time=None, end_time=None, config=None, custom_name
     ydl_opts["progress_hooks"] = [progress_hook]
 
     log(f"\n📥 Downloading: {url}")
-    if start_time is not None and end_time is not None:
+    if has_time_range:
         log(f"   Time range: {start_time}s - {end_time}s")
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:

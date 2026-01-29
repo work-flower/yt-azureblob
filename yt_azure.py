@@ -120,6 +120,12 @@ def setup_logging():
 logger = setup_logging()
 
 
+def log(message, level="info"):
+    """Log message and print to console"""
+    getattr(logger, level)(message)
+    print(message)
+
+
 def load_history():
     """Load download history"""
     history_path = get_history_path()
@@ -294,21 +300,16 @@ def download_video(url, start_time=None, end_time=None, config=None, custom_name
             downloaded_file = d["filename"]
     
     ydl_opts["progress_hooks"] = [progress_hook]
-    
-    logger.info(f"Downloading: {url}")
+
+    log(f"\n📥 Downloading: {url}")
     if start_time is not None and end_time is not None:
-        logger.info(f"Time range: {start_time}s - {end_time}s")
-    
-    print(f"\n📥 Downloading: {url}")
-    if start_time is not None and end_time is not None:
-        print(f"   Time range: {start_time}s - {end_time}s")
-    
+        log(f"   Time range: {start_time}s - {end_time}s")
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
-    
+
     if downloaded_file:
-        logger.info(f"Downloaded: {downloaded_file}")
-        print(f"✅ Downloaded: {downloaded_file}")
+        log(f"✅ Downloaded: {downloaded_file}")
     
     return downloaded_file
 
@@ -321,13 +322,11 @@ def upload_to_azure(filepath, config=None):
     azure_config = config["azure"]
     
     if not azure_config.get("connection_string"):
-        logger.error("Azure connection string not configured")
-        print("❌ Azure connection string not configured. Run: yt-azure --config")
+        log("❌ Azure connection string not configured. Run: yt-azure --config", "error")
         return None
-    
+
     if not azure_config.get("container_name"):
-        logger.error("Azure container name not configured")
-        print("❌ Azure container name not configured. Run: yt-azure --config")
+        log("❌ Azure container name not configured. Run: yt-azure --config", "error")
         return None
     
     blob_service_client = BlobServiceClient.from_connection_string(
@@ -341,17 +340,15 @@ def upload_to_azure(filepath, config=None):
     blob_folder = azure_config.get("blob_folder", "").strip("/")
     blob_path = f"{blob_folder}/{filename}" if blob_folder else filename
     
-    logger.info(f"Uploading to Azure: {azure_config['container_name']}/{blob_path}")
-    print(f"\n☁️  Uploading to Azure: {azure_config['container_name']}/{blob_path}")
-    
+    log(f"\n☁️  Uploading to Azure: {azure_config['container_name']}/{blob_path}")
+
     blob_client = container_client.get_blob_client(blob_path)
-    
+
     with open(filepath, "rb") as data:
         blob_client.upload_blob(data, overwrite=True)
-    
-    logger.info(f"Upload complete: {blob_client.url}")
-    print(f"✅ Upload complete!")
-    print(f"   URL: {blob_client.url}")
+
+    log(f"✅ Upload complete!")
+    log(f"   URL: {blob_client.url}")
     
     return blob_client.url
 

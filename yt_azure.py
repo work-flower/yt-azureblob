@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 try:
@@ -258,7 +259,6 @@ def download_video(url, start_time=None, end_time=None, config=None, custom_name
     os.makedirs(output_path, exist_ok=True)
     
     # Build output template with time range and timestamp
-    from datetime import datetime
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # Use custom name if provided, otherwise use video title
@@ -555,7 +555,6 @@ def launch_ui(config_path=None):
                 output.append(f"❌ Upload error: {e}")
         
         # Save to history with log
-        from datetime import datetime
         entry = {
             "url": url,
             "start": start_time,

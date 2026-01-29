@@ -11,6 +11,7 @@ setup(
         "yt-dlp",
         "azure-storage-blob",
         "gradio",
+        "pytz",  # Required by gradio but missing from its dependencies
     ],
     entry_points={
         "console_scripts": [

@@ -28,15 +28,14 @@ try:
 except ImportError:
     HAS_GRADIO = False
 
+SCRIPT_DIR = Path(__file__).parent.resolve()
+
 
 def get_config_path(custom_path=None):
     """Get config file path (defaults to same folder as script)"""
     if custom_path:
         return Path(custom_path)
-    
-    # Default: same directory as the script
-    script_dir = Path(__file__).parent.resolve()
-    return script_dir / "yt-azure.json"
+    return SCRIPT_DIR / "yt-azure.json"
 
 
 def resolve_path(path_str):
@@ -44,15 +43,12 @@ def resolve_path(path_str):
     path = Path(path_str)
     if path.is_absolute():
         return path
-    # Relative paths are relative to script directory
-    script_dir = Path(__file__).parent.resolve()
-    return script_dir / path
+    return SCRIPT_DIR / path
 
 
 def get_history_path():
     """Get history file path (same folder as script)"""
-    script_dir = Path(__file__).parent.resolve()
-    return script_dir / "history.json"
+    return SCRIPT_DIR / "history.json"
 
 
 def parse_time(time_str):
@@ -102,8 +98,7 @@ def format_time_for_filename(seconds):
 
 def get_logs_path():
     """Get logs file path (same folder as script)"""
-    script_dir = Path(__file__).parent.resolve()
-    return script_dir / "yt-azure.log"
+    return SCRIPT_DIR / "yt-azure.log"
 
 
 def setup_logging():
